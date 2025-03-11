@@ -184,24 +184,10 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""From the following news return me only those related to:
-- **Home buying platforms**
-- **New real estate product launches**
-- **First-time home buyers**
-- **Market expansion in the real estate sector**
-- **Major strategic shifts by real estate companies**
-- **Blockchain and tokenization in real estate**
-- **Trends in real estate technology (PropTech) adoption**
-- **Investment and funding rounds in real estate startups and companies**
-- **Regulatory changes and government policies impacting the real estate market**
-- **Real estate mergers, acquisitions, and partnerships**
-- **Innovations in real estate financing (e.g., crowdfunding, real estate REITs)**
-- **Consumer behavior shifts and preferences in the real estate market**
+query =  ("""From the following news return me only those related to merger and 
+acquisitions in the real estate and mortgage industry. Main focus should be in the US market.
 
-📌 **Important Instructions for filter:**
-- I don't want more than 20 news. So give me only top 20 news that are very important to know for reAlpha Tech Corp. 
-  Don't give me the news that is generic and informational blog articles. I need news about important strategic moves of competitors. 
-  Rather than additional texts, I would simply love the news title with hyperlink containing URL.
+I want only top news and please do not write same company's news more than once.
     """)
 summary = summarize_news_with_gemini(df, query)
 
