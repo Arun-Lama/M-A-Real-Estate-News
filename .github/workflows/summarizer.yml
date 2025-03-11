@@ -26,8 +26,8 @@ jobs:
     - name: Load RSS Feeds
       run: cat mnaFeeds.txt  # Verify the file is present
 
-    - name: Run News Summarizer
+    - name: Run  Daily M&A News Summarizer
       env:
         GEMINI_API: ${{ secrets.GEMINI_API }}
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-      run: python summarize_news.py
+      run: python Mna_summarizer.py
