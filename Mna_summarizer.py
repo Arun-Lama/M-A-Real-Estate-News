@@ -17,7 +17,7 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 genai.configure(api_key=GEMINI_API_KEY)
 
 # Load RSS Feeds from the repository (rss_feeds.txt should be in the same directory)
-rss_file_path = "rss_feeds.txt"
+rss_file_path = "mnaFeeds.txt"
 with open(rss_file_path, "r") as file:
     rss_feeds = [line.strip() for line in file.readlines() if line.strip()]
 
