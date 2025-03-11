@@ -1,1 +1,33 @@
 
+name: Daily M&A News Summarizer
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  
+  workflow_dispatch:  # Allows manual triggering
+
+jobs:
+  summarize_news:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install Dependencies
+      run: |
+        pip install feedparser pandas google-generativeai slack_sdk
+
+    - name: Load RSS Feeds
+      run: cat mnaFeeds.txt  # Verify the file is present
+
+    - name: Run News Summarizer
+      env:
+        GEMINI_API: ${{ secrets.GEMINI_API }}
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      run: python summarize_news.py
