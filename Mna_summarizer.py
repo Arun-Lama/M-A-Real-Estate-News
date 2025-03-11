@@ -8,6 +8,7 @@ import random
 from datetime import datetime
 import re
 import urllib
+import ast
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
@@ -21,8 +22,9 @@ rss_file_path = "mnaFeeds.txt"
 with open(rss_file_path, "r") as file:
     rss_feeds = [line.strip() for line in file.readlines() if line.strip()]
 
+
+rss_feeds = ast.literal_eval("".join(rss_feeds))
 print("✅ RSS Feeds Loaded:", rss_feeds)
-rss_feeds = [url.strip("[]',") for url in rss_feeds]  # Clean unwanted characters
 
 # Initialize an empty list to store news articles
 all_news = []
