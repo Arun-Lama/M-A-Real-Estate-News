@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv  # Import dotenv
 import feedparser
 import pandas as pd
 import slack_sdk
@@ -10,7 +9,7 @@ from datetime import datetime
 import re
 import urllib
 import ast
-load_dotenv()
+
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
