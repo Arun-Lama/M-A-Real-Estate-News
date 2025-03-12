@@ -13,7 +13,7 @@ import ast
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
-SLACK_BOT_TOKEN = os.getenv("MNA_CHANNEL_TOKEN")
+SLACK_BOT_TOKEN = os.getenv("MNA_NEWS_BOT")
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
