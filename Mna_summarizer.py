@@ -278,5 +278,5 @@ channel_id = get_channel_id(channel_name)
 print(summary)
 print("---------------------------------")
 print(formatted_summary)
-# if formatted_summary and channel_id:
-#     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
+if formatted_summary and channel_id:
+    send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
