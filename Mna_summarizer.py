@@ -204,7 +204,7 @@ from slack_sdk.errors import SlackApiError
 client = WebClient(token=SLACK_BOT_TOKEN)
 
 # Define Slack Channel Name
-channel_name = 'news-channel'
+channel_name = 'mna-news-channel'
 
 def get_channel_id(channel_name):
     """Fetches the Slack private channel ID given the channel name."""
