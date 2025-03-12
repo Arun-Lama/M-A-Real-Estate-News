@@ -150,9 +150,9 @@ def format_dataframe_for_gemini(df):
     Converts DataFrame into structured text format for Gemini.
     Each news entry includes a **date**, **title (hyperlinked)**, and **source URL**.
     """
-    formatted_text = "🔍 **Recent News:**\n\n"
+    formatted_text = "🔍 **Recent News Articles:**\n\n"
     for _, row in df.iterrows():
-        formatted_text += f"- **{row['Date']}**: [{row['Title']}]({row['URL']})\n"
+        formatted_text += f"- {row['Date']}: {row['Title']}, {row['URL']}\n"
     return formatted_text
 
 
@@ -186,10 +186,11 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""From the following news return me only those related to merger and 
+query =  ("""Above news are in this format. Date: news, URL. For these news apply filter to get only those related to merger and 
 acquisitions in the real estate and mortgage industry. Main focus should be in the US market.
 
-I want only top news and please do not write same company's news more than once.
+- Please take care of the duplicate news titles from different or same source. I want only unique titles. And final news list should not exceed 20.
+- ONLY THE OUTPUT FORMAT YOU CAN GIVE> Date, News, URL
     """)
 summary = summarize_news_with_gemini(df, query)
 
@@ -221,49 +222,52 @@ from datetime import datetime
 
 def format_summary_for_slack(summary):
     """
-    Formats the summary for Slack:
-    - Removes unnecessary asterisks around the date
-    - Removes calendar emoji
-    - Includes the date and title (hyperlinked) without repeating text or extra 'Link'
+    Formats the summary into a Slack-compatible structure with properly formatted links.
+
+    Args:
+    - summary (str): The raw summary text (comma-separated values: Date, Title, URL).
+
+    Returns:
+    - str: A properly formatted Slack message.
     """
-    formatted_summary = "Here’s the latest update on the real estate sector:\n\n"
-    
-    # Process each line from the summary
-    for line in summary.split("\n"):
-        if "[" in line and "](" in line:  # Identifying Slack hyperlink formatting
-            # Find the title and URL in the markdown format
-            title_start = line.find("[") + 1
-            title_end = line.find("]")
-            url_start = line.find("(") + 1
-            url_end = line.find(")")
+    formatted_summary = "*🏡 Real Estate Market M&A Updates*\n\n"
+    lines = summary.strip().split("\n")
 
-            title = line[title_start:title_end]
-            url = line[url_start:url_end]
+    for line in lines:
+        line = line.strip()
+        # Split by commas to get Date, Title, and URL
+        parts = line.split(", ")
+        if len(parts) < 3:
+            continue  # Skip invalid lines
 
-            # Extract date from the line (assume the date is always at the start of the line)
-            date = line.split(":")[0].strip() if ":" in line else "Unknown Date"
-            date = date.replace("*","")
-            # Remove asterisks around the date and calendar emoji
-            date = date.replace("**", "")  # Remove any asterisks around the date
+        date, title, url = parts[0].strip(), parts[1].strip(), parts[2].strip()
 
-            
-            # Format the output as Date → Title (hyperlinked) without the "Link" part
-            formatted_summary += f"{date} → <{url}|{title}>\n"
+        # Format for Slack using `<URL|Title>` format
+        formatted_summary += f"- 📅 *{date}* → <{url}|{title}>\n"
 
-        else:
-            # If it's not a link, just add the line as is
-            formatted_summary += line + "\n"
+    return formatted_summary.strip()
 
-    return formatted_summary.strip().replace("**", "")
+def send_message_to_slack(channel_id, summary_text, slack_token):
+    """
+    Sends the preformatted summary message to Slack.
 
-def send_message_to_slack(channel_id, message_text):
-    """Sends a formatted message to Slack."""
+    Args:
+    - channel_id (str): The Slack channel ID.
+    - summary_text (str): The already formatted summary text.
+    - slack_token (str): Slack Bot Token.
+    """
     if not channel_id:
         print("❌ Cannot send message: Channel ID not found.")
         return
 
+    client = WebClient(token=slack_token)
+
     try:
-        response = client.chat_postMessage(channel=channel_id, text=message_text)
+        response = client.chat_postMessage(
+            channel=channel_id,
+            text=summary_text,  # Directly sending the preformatted summary
+            mrkdwn=True  # Ensures Slack processes Markdown formatting correctly
+        )
         print("✅ Message sent successfully to Slack!")
     except SlackApiError as e:
         print(f"❌ Error sending message: {e.response['error']}")
@@ -271,6 +275,8 @@ def send_message_to_slack(channel_id, message_text):
 # Format the summary and send to Slack
 formatted_summary = format_summary_for_slack(summary)
 channel_id = get_channel_id(channel_name)
-
-if formatted_summary and channel_id:
-    send_message_to_slack(channel_id, formatted_summary)
+print(summary)
+print("---------------------------------")
+print(formatted_summary)
+# if formatted_summary and channel_id:
+#     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
