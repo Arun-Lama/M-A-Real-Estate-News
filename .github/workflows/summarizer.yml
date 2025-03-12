@@ -29,5 +29,5 @@ jobs:
     - name: Run  Daily M&A News Summarizer
       env:
         GEMINI_API: ${{ secrets.GEMINI_API }}
-        SLACK_BOT_TOKEN: ${{ secrets.MNA_CHANNEL_TOKEN }}
+        SLACK_BOT_TOKEN: ${{ secrets.MNA_NEWS_BOT }}
       run: python Mna_summarizer.py
