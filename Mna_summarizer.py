@@ -152,7 +152,7 @@ def format_dataframe_for_gemini(df):
     """
     formatted_text = "🔍 **Recent News Articles:**\n\n"
     for _, row in df.iterrows():
-        formatted_text += f"- {row['Date']}: {row['Title']}, {row['URL']}\n"
+        formatted_text += f"- {row['Title']}, {row['URL']}\n"
     return formatted_text
 
 
@@ -186,11 +186,11 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""Above news are in this format. Date: news, URL. For these news apply filter to get only those related to merger and 
+query =  ("""Below news are in this format. Date: news, URL. For these news apply filter to get only those related to merger and 
 acquisitions in the real estate and mortgage industry. Main focus should be in the US market.
 
 - Please take care of the duplicate news titles from different or same source. I want only unique titles. And final news list should not exceed 20.
-- ONLY THE OUTPUT FORMAT YOU CAN GIVE> Date, News, URL
+- ONLY THE OUTPUT FORMAT YOU CAN GIVE>News, URL
     """)
 summary = summarize_news_with_gemini(df, query)
 
@@ -243,7 +243,7 @@ def format_summary_for_slack(summary):
         date, title, url = parts[0].strip(), parts[1].strip(), parts[2].strip()
 
         # Format for Slack using `<URL|Title>` format
-        formatted_summary += f"- 📅 *{date}* → <{url}|{title}>\n"
+        formatted_summary += f"- <{url}|{title}>\n"
 
     return formatted_summary.strip()
 
