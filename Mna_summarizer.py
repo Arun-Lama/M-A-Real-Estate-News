@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv  # Import dotenv
 import feedparser
 import pandas as pd
 import slack_sdk
@@ -9,6 +10,7 @@ from datetime import datetime
 import re
 import urllib
 import ast
+load_dotenv()
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
@@ -54,6 +56,7 @@ df = pd.DataFrame(all_news)
 
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce')
 today_date = datetime.today().strftime('%Y-%m-%d')
+df = df.copy()
 df_today = df[df['Date'].dt.strftime('%Y-%m-%d') == today_date]
 
 # Clean HTML tags in titles
@@ -61,7 +64,7 @@ def clean_html_tags(text):
     clean_text = re.sub(r'<.*?>', '', text)  # Remove HTML tags like <b>...</b>
     return clean_text.strip()
 
-df['Title'] = df['Title'].apply(clean_html_tags)
+df_today['Title'] = df_today['Title'].apply(clean_html_tags)
 
 # Extract actual URL if it's a Google redirect URL
 def extract_actual_url(google_url):
@@ -70,7 +73,7 @@ def extract_actual_url(google_url):
     return query_params.get("url", [google_url])[0]  # Return the actual URL or original if not found
 
 # Apply the function to clean the 'URL' column
-df['URL'] = df['URL'].apply(extract_actual_url)
+df_today['URL'] = df_today['URL'].apply(extract_actual_url)
 
 # Randomly shuffle available Gemini models
 models = [
@@ -186,13 +189,13 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""Below news are in this format. Date: news, URL. For these news apply filter to get only those related to merger and 
-acquisitions in the real estate and mortgage industry. Main focus should be in the US market.
+query =  ("""Below news are in this format: news, URL. For these news apply filter to get only those related to merger and 
+acquisitions in the real estate and mortgage industry.
 
 - Please take care of the duplicate news titles from different or same source. I want only unique titles. And final news list should not exceed 20.
-- ONLY THE OUTPUT FORMAT YOU CAN GIVE>News, URL
+- ONLY THE OUTPUT FORMAT YOU CAN GIVE: News, URL
     """)
-summary = summarize_news_with_gemini(df, query)
+summary = summarize_news_with_gemini(df_today, query)
 
 # Slack integration
 from slack_sdk import WebClient
@@ -236,11 +239,11 @@ def format_summary_for_slack(summary):
     for line in lines:
         line = line.strip()
         # Split by commas to get Date, Title, and URL
-        parts = line.split(", ")
-        if len(parts) < 3:
+        parts = line.split(",",2)
+        if len(parts) < 2:
             continue  # Skip invalid lines
 
-        date, title, url = parts[0].strip(), parts[1].strip(), parts[2].strip()
+        title, url = parts[0].strip(), parts[1].strip()
 
         # Format for Slack using `<URL|Title>` format
         formatted_summary += f"- <{url}|{title}>\n"
