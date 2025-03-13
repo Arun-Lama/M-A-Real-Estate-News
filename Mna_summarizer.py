@@ -9,11 +9,18 @@ from datetime import datetime
 import re
 import urllib
 import ast
+# Slack integration
+from dotenv import load_dotenv
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+load_dotenv()
+load_dotenv(override=True)
+
 
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_BOT_TOKEN = os.getenv("MNA_CHANNEL_TOEKN")
 
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
@@ -25,7 +32,6 @@ with open(rss_file_path, "r") as file:
 
 
 rss_feeds = ast.literal_eval("".join(rss_feeds))
-print("✅ RSS Feeds Loaded:", rss_feeds)
 
 # Initialize an empty list to store news articles
 all_news = []
@@ -196,14 +202,10 @@ acquisitions in the real estate and mortgage industry.
     """)
 summary = summarize_news_with_gemini(df_today, query)
 
-# Slack integration
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
-
 # Initialize Slack WebClient
 client = WebClient(token=SLACK_BOT_TOKEN)
 
-# Define Slack Channel Name
+# # Define Slack Channel Name
 channel_name = 'mna-news-channel'
 
 def get_channel_id(channel_name):
@@ -220,7 +222,6 @@ def get_channel_id(channel_name):
 
     except SlackApiError:
         return None
-from datetime import datetime
 
 def format_summary_for_slack(summary):
     """
@@ -280,7 +281,7 @@ channel_id = get_channel_id(channel_name)
 print(summary)
 print("---------------------------------")
 print(formatted_summary)
-print(channel_id)
+print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
