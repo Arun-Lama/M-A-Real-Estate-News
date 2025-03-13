@@ -284,5 +284,5 @@ print(formatted_summary)
 print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
-    # send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
+    send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
 
