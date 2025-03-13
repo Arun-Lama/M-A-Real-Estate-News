@@ -10,10 +10,8 @@ import re
 import urllib
 import ast
 # Slack integration
-from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-load_dotenv(override=True)
 
 
 
