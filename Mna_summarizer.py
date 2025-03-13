@@ -281,4 +281,5 @@ print(summary)
 print("---------------------------------")
 print(formatted_summary)
 if formatted_summary and channel_id:
+    print("Message Generated")
     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
