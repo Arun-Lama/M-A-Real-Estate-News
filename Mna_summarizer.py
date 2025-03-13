@@ -12,7 +12,10 @@ import ast
 # Slack integration
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
+from dotenv import load_dotenv  # Ensure dotenv is used
 
+# ✅ Load API keys from GitHub Secrets or .env file explicitly
+load_dotenv(override=True)  # Ensures environment variables are reloaded
 
 
 # Load API keys from GitHub Secrets
