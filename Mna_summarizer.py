@@ -21,7 +21,7 @@ load_dotenv(override=True)  # Ensures environment variables are reloaded
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
 SLACK_BOT_TOKEN = os.getenv("MNA_NEWS_BOT")
-
+print(F"SLACK BOT TOEKEN: {SLACK_BOT_TOKEN}")
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -285,3 +285,4 @@ print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
     # send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
+
