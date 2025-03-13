@@ -22,7 +22,7 @@ jobs:
     - name: Install Dependencies
       run: |
         pip install feedparser pandas google-generativeai slack_sdk
-
+        pip install python-dotenv  # Ensure dotenv is installed
     - name: Load RSS Feeds
       run: cat mnaFeeds.txt  # Verify the file is present
 
