@@ -13,7 +13,6 @@ import ast
 from dotenv import load_dotenv
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
-load_dotenv()
 load_dotenv(override=True)
 
 
@@ -284,4 +283,4 @@ print(formatted_summary)
 print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
-    send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
+    # send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
