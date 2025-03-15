@@ -20,7 +20,7 @@ load_dotenv(override=True)  # Ensures environment variables are reloaded
 
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
-SLACK_BOT_TOKEN = os.getenv("MNA_NEWS_BOT")
+SLACK_BOT_TOKEN = os.getenv("MNABOT")
 print(F"SLACK BOT TOEKEN: {SLACK_BOT_TOKEN}, Gemini api + {GEMINI_API_KEY}")
 # # Configure Gemini API
 # genai.configure(api_key=GEMINI_API_KEY)
