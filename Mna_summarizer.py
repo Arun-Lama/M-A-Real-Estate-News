@@ -213,7 +213,10 @@ def summarize_news_with_gemini(df, query):
 
 # The query you want Gemini to summarize
 query =  ("""Below are the list of news and their respective URL with 
-          format = news title: news title, URL : URL. Return me URL and news in json format.""")
+          format = news title: news title, URL : URL. From these news get those related to merger and 
+acquisitions in the real estate and mortgage industry in json format. 
+When you don't find the news related to M&A of real estate and mortgage industries just 
+response nothing but 'No M&A news for today!' """)
 summary = summarize_news_with_gemini(df_today, query)
 
 # Initialize Slack WebClient
