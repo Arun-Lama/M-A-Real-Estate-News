@@ -1,4 +1,5 @@
 import os
+import json
 import feedparser
 import pandas as pd
 import slack_sdk
@@ -23,6 +24,24 @@ GEMINI_API_KEY = os.getenv("GEMINI_API")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
+
+client = WebClient(token=SLACK_BOT_TOKEN)
+def get_channel_id(channel_name):
+    """Fetches the Slack private channel ID given the channel name."""
+    try:
+        response = client.conversations_list(types="private_channel")
+        channels = response.get("channels", [])
+
+        for channel in channels:
+            if channel["name"] == channel_name:
+                return channel["id"]
+
+        return None
+
+    except SlackApiError:
+        return None
+
+
 
 # Load RSS Feeds from the repository (rss_feeds.txt should be in the same directory)
 rss_file_path = "mnaFeeds.txt"
@@ -132,7 +151,7 @@ def send_prompt_with_backoff(prompt, model_name):
     while attempt < MAX_RETRIES:
         try:
             print(f"🚀 Sending request to {model_name} (Attempt {attempt+1})")
-            model = genai.GenerativeModel(model_name)
+            model = genai.GenerativeModel(model_name,generation_config={"response_mime_type": "application/json"})
             response = model.generate_content(prompt)
 
             request_count[model_name] += 1
@@ -157,9 +176,9 @@ def format_dataframe_for_gemini(df):
     Converts DataFrame into structured text format for Gemini.
     Each news entry includes a **date**, **title (hyperlinked)**, and **source URL**.
     """
-    formatted_text = "🔍 **Recent News Articles:**\n\n"
+    formatted_text = "🔍 **Recent News:**\n\n"
     for _, row in df.iterrows():
-        formatted_text += f"- {row['Title']}, {row['URL']}\n"
+        formatted_text += f"->news title: {row['Title']}. URL: {row['URL']}\n"
     return formatted_text
 
 
@@ -193,24 +212,20 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""Below news are in this format: news, URL. For these news apply filter to get only those related to merger and 
-acquisitions in the real estate and mortgage industry.
-
-- Please take care of the duplicate news titles from different or same source. I want only unique titles. And final news list should not exceed 20.
-- ONLY THE OUTPUT FORMAT YOU CAN GIVE: News, URL
-    """)
+query =  ("""Below are the list of news and their respective URL with 
+          format = news title: news title, URL : URL. Return me URL and news in json format.""")
 summary = summarize_news_with_gemini(df_today, query)
 
 # Initialize Slack WebClient
 client = WebClient(token=SLACK_BOT_TOKEN)
 
 # # Define Slack Channel Name
-channel_name = 'mna-news-channel'
+channel_name = 'news-channel-2'
 
 def get_channel_id(channel_name):
     """Fetches the Slack private channel ID given the channel name."""
     try:
-        response = client.conversations_list(types="private_channel")
+        response = client.conversations_list(types="public_channel")
         channels = response.get("channels", [])
 
         for channel in channels:
@@ -227,26 +242,37 @@ def format_summary_for_slack(summary):
     Formats the summary into a Slack-compatible structure with properly formatted links.
 
     Args:
-    - summary (str): The raw summary text (comma-separated values: Date, Title, URL).
+    - summary (str or dict): The raw summary text or a dictionary containing news URLs as keys and titles as values.
 
     Returns:
     - str: A properly formatted Slack message.
     """
+    
+    if summary == "No M&A news for today!":
+        return "No M&A news for today!"
+    
+    if isinstance(summary, str):
+        try:
+            summary = json.loads(summary)  # Convert JSON string to dictionary if needed
+        except json.JSONDecodeError:
+            return "Invalid JSON input."
+    
     formatted_summary = "*🏡 Real Estate Market M&A Updates*\n\n"
-    lines = summary.strip().split("\n")
+    
+    # Check if the JSON is a flat dictionary or a nested list
+    if isinstance(summary, dict):
+        if "news_title" in summary and isinstance(summary["news_title"], list):  # Handle nested format
+            news_items = summary["news_title"]
+        else:
+            news_items = [{"URL": k, "news_title": v} for k, v in summary.items()]  # Convert to expected format
+    elif isinstance(summary, list):  # Handle if it's already a list
+        news_items = summary
+    else:
+        return "Unexpected summary format."
 
-    for line in lines:
-        line = line.strip()
-        # Split by commas to get Date, Title, and URL
-        parts = line.split(",",2)
-        if len(parts) < 2:
-            continue  # Skip invalid lines
-
-        title, url = parts[0].strip(), parts[1].strip()
-
-        # Format for Slack using `<URL|Title>` format
-        formatted_summary += f"- <{url}|{title}>\n"
-
+    for item in news_items:
+        formatted_summary += f"- <{item['URL']}|{item['news_title']}>\n"
+    
     return formatted_summary.strip()
 
 def send_message_to_slack(channel_id, summary_text, slack_token):
@@ -284,4 +310,3 @@ print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
-
