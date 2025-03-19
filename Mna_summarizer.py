@@ -25,24 +25,6 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
-client = WebClient(token=SLACK_BOT_TOKEN)
-def get_channel_id(channel_name):
-    """Fetches the Slack private channel ID given the channel name."""
-    try:
-        response = client.conversations_list(types="private_channel")
-        channels = response.get("channels", [])
-
-        for channel in channels:
-            if channel["name"] == channel_name:
-                return channel["id"]
-
-        return None
-
-    except SlackApiError:
-        return None
-
-
-
 # Load RSS Feeds from the repository (rss_feeds.txt should be in the same directory)
 rss_file_path = "mnaFeeds.txt"
 with open(rss_file_path, "r") as file:
@@ -212,32 +194,59 @@ def summarize_news_with_gemini(df, query):
     return None
 
 # The query you want Gemini to summarize
-query =  ("""Below are the list of news and their respective URL with 
-          format = news title: news title, URL : URL. From these news get those related to merger and 
-acquisitions in the real estate and mortgage industry in json format. 
-When you don't find the news related to M&A of real estate and mortgage industries just 
-response nothing but 'No M&A news for today!' """)
+query = """
+Below is a list of news articles with their respective titles and URLs in the format:
+"news title: news title. URL: URL. 
+
+Extract only those news articles that are related to mergers and acquisitions in the real estate and mortgage industry, and return the results in the following JSON format:
+
+{
+  "M&A_News": [
+    {
+      "title": "News Title",
+      "url": "News URL"
+    },
+    {
+      "title": "News Title",
+      "url": "News URL"
+    }
+  ]
+}
+
+If there are no relevant news articles, return:
+
+{
+  "M&A_News": "No News"
+}
+"""
+
 summary = summarize_news_with_gemini(df_today, query)
 
 # Initialize Slack WebClient
 client = WebClient(token=SLACK_BOT_TOKEN)
 
 # # Define Slack Channel Name
-channel_name = 'news-channel-2'
+channel_name = 'mna-news-channel'
 
 def get_channel_id(channel_name):
-    """Fetches the Slack private channel ID given the channel name."""
+    """Fetches the Slack channel ID given the channel name, handling pagination."""
     try:
-        response = client.conversations_list(types="public_channel")
-        channels = response.get("channels", [])
+        cursor = None
+        while True:
+            response = client.conversations_list(types="public_channel,private_channel", cursor=cursor)
+            channels = response.get("channels", [])
+            
+            for channel in channels:
+                if channel["name"].lower() == channel_name.lower():
+                    return channel["id"]
 
-        for channel in channels:
-            if channel["name"] == channel_name:
-                return channel["id"]
+            # Check if there are more pages
+            cursor = response.get("response_metadata", {}).get("next_cursor")
+            if not cursor:
+                break  # Exit if no more pages
 
-        return None
-
-    except SlackApiError:
+    except SlackApiError as e:
+        print(f"Error fetching channels: {e.response['error']}")
         return None
 
 def format_summary_for_slack(summary):
@@ -251,8 +260,9 @@ def format_summary_for_slack(summary):
     - str: A properly formatted Slack message.
     """
     
-    if summary == "No M&A news for today!":
-        return "No M&A news for today!"
+    # If the summary contains no relevant M&A news
+    if isinstance(summary, dict) and summary.get("M&A_News") == "No News":
+        return "No M&A news today."
     
     if isinstance(summary, str):
         try:
@@ -262,21 +272,17 @@ def format_summary_for_slack(summary):
     
     formatted_summary = "*🏡 Real Estate Market M&A Updates*\n\n"
     
-    # Check if the JSON is a flat dictionary or a nested list
-    if isinstance(summary, dict):
-        if "news_title" in summary and isinstance(summary["news_title"], list):  # Handle nested format
-            news_items = summary["news_title"]
-        else:
-            news_items = [{"URL": k, "news_title": v} for k, v in summary.items()]  # Convert to expected format
-    elif isinstance(summary, list):  # Handle if it's already a list
-        news_items = summary
+    # Check if the JSON structure is as expected
+    if isinstance(summary, dict) and "M&A_News" in summary and isinstance(summary["M&A_News"], list):
+        news_items = summary["M&A_News"]
     else:
         return "Unexpected summary format."
 
     for item in news_items:
-        formatted_summary += f"- <{item['URL']}|{item['news_title']}>\n"
+        formatted_summary += f"- <{item['url']}|{item['title']}>\n"
     
     return formatted_summary.strip()
+
 
 def send_message_to_slack(channel_id, summary_text, slack_token):
     """
