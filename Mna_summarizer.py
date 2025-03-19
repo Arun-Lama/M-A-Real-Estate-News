@@ -279,7 +279,7 @@ def format_summary_for_slack(summary):
         return "Unexpected summary format."
 
     for item in news_items:
-        formatted_summary += f"- <{item['url']}|{item['title']}>\n"
+        formatted_summary += f"📢: <{item['url']}|{item['title']}>\n"
     
     return formatted_summary.strip()
 
