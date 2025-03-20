@@ -199,7 +199,7 @@ Below is a list of news articles with their respective titles and URLs in the fo
 "news title: news title. URL: URL. 
 
 Extract only news articles that are related to mergers and acquisitions in the real estate and mortgage industry. 
-Please do not repeat the same news, I don't want duplications. Return the results in the following JSON format:
+Please do not repeat the same news, I don't want duplications, it should be strictly followed. Return the results in the following JSON format:
 
 {
   "M&A_News": [
