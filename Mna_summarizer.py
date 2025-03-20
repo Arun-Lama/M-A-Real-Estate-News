@@ -198,7 +198,8 @@ query = """
 Below is a list of news articles with their respective titles and URLs in the format:
 "news title: news title. URL: URL. 
 
-Extract only those news articles that are related to mergers and acquisitions in the real estate and mortgage industry, and return the results in the following JSON format:
+Extract only news articles that are related to mergers and acquisitions in the real estate and mortgage industry. 
+Please do not repeat the same news, I don't want duplications. Return the results in the following JSON format:
 
 {
   "M&A_News": [
