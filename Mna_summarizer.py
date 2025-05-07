@@ -22,6 +22,8 @@ load_dotenv(override=True)  # Ensures environment variables are reloaded
 # Load API keys from GitHub Secrets
 GEMINI_API_KEY = os.getenv("GEMINI_API")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+
+print(GEMINI_API_KEY, SLACK_BOT_TOKEN)
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -58,6 +60,7 @@ for rss_url in rss_feeds:
 
 # Convert to DataFrame for better display
 df = pd.DataFrame(all_news)
+print(df)
 
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce')
 today_date = datetime.today().strftime('%Y-%m-%d')
