@@ -23,7 +23,6 @@ load_dotenv(override=True)  # Ensures environment variables are reloaded
 GEMINI_API_KEY = os.getenv("GEMINI_API")
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 
-print(GEMINI_API_KEY, SLACK_BOT_TOKEN)
 # Configure Gemini API
 genai.configure(api_key=GEMINI_API_KEY)
 
@@ -60,7 +59,6 @@ for rss_url in rss_feeds:
 
 # Convert to DataFrame for better display
 df = pd.DataFrame(all_news)
-print(df)
 
 df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d', errors='coerce')
 today_date = datetime.today().strftime('%Y-%m-%d')
@@ -85,8 +83,7 @@ df_today['URL'] = df_today['URL'].apply(extract_actual_url)
 
 # Randomly shuffle available Gemini models
 models = [
-    {"name": "gemini-1.5-pro", "rpm": 60},
-    {"name": "gemini-1.5-flash", "rpm": 60},
+
     {"name": "gemini-2.0-flash", "rpm": 15},
     {"name": "gemini-2.0-flash-lite-preview", "rpm": 30}
 ]
@@ -254,38 +251,26 @@ def get_channel_id(channel_name):
         return None
 
 def format_summary_for_slack(summary):
-    """
-    Formats the summary into a Slack-compatible structure with properly formatted links.
-
-    Args:
-    - summary (str or dict): The raw summary text or a dictionary containing news URLs as keys and titles as values.
-
-    Returns:
-    - str: A properly formatted Slack message.
-    """
-    
     # If the summary contains no relevant M&A news
     if isinstance(summary, dict) and summary.get("M&A_News") == "No News":
         return "No M&A news today."
     
+    # If summary is a JSON string, parse it
     if isinstance(summary, str):
         try:
-            summary = json.loads(summary)  # Convert JSON string to dictionary if needed
+            summary = json.loads(summary)
         except json.JSONDecodeError:
             return "Invalid JSON input."
-    
-    formatted_summary = "*🏡 Real Estate Market M&A Updates*\n\n"
-    
-    # Check if the JSON structure is as expected
-    if isinstance(summary, dict) and "M&A_News" in summary and isinstance(summary["M&A_News"], list):
-        news_items = summary["M&A_News"]
-    else:
-        return "Unexpected summary format."
 
-    for item in news_items:
-        formatted_summary += f"📢: <{item['url']}|{item['title']}>\n"
+    # ✅ Safely assume it's a dict here
+    if isinstance(summary, dict) and "M&A_News" in summary and isinstance(summary["M&A_News"], list):
+        formatted_summary = "*🏡 Real Estate Market M&A Updates*\n\n"
+        for item in summary["M&A_News"]:
+            formatted_summary += f"📢: <{item['url']}|{item['title']}>\n"
+        return formatted_summary.strip()
     
-    return formatted_summary.strip()
+    return "Unexpected summary format."
+
 
 
 def send_message_to_slack(channel_id, summary_text, slack_token):
@@ -316,10 +301,9 @@ def send_message_to_slack(channel_id, summary_text, slack_token):
 # Format the summary and send to Slack
 formatted_summary = format_summary_for_slack(summary)
 channel_id = get_channel_id(channel_name)
-print(summary)
-print("---------------------------------")
+
 print(formatted_summary)
-print(f"Channel id is {channel_id}")
 if formatted_summary and channel_id:
     print("Message Generated and sent.")
     send_message_to_slack(channel_id, formatted_summary, SLACK_BOT_TOKEN)
+
